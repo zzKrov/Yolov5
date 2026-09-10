@@ -1,154 +1,163 @@
 import io
 import time
-import streamlit as st
 import numpy as np
 import pandas as pd
 from PIL import Image
+import streamlit as st
+import streamlit.components.v1 as components
 
 # ---------------------------------------------------------
-# PAGE CONFIGURATION
+# PAGE SETUP
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="NEON-NOIR // YOLO HUD",
-    page_icon="👁️",
+    page_title="Object Detection Studio",
+    page_icon="🎯",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ---------------------------------------------------------
-# NEON NOIR STYLESHEET (CSS INJECTION)
+# MOUSE-TRACKING SCRIPT (Passes coordinates to CSS)
+# ---------------------------------------------------------
+components.html(
+    """
+    <script>
+    const parentDoc = window.parent.document;
+    const root = parentDoc.documentElement;
+
+    parentDoc.addEventListener('mousemove', (e) => {
+        root.style.setProperty('--mouse-x', `${e.clientX}px`);
+        root.style.setProperty('--mouse-y', `${e.clientY}px`);
+    });
+    </script>
+    """,
+    height=0,
+    width=0
+)
+
+# ---------------------------------------------------------
+# NEON NOIR DESIGN SYSTEM
 # ---------------------------------------------------------
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
-    /* Global Dark Noir Theme */
     :root {
-        --bg-dark: #07090e;
-        --card-bg: rgba(13, 17, 27, 0.75);
-        --neon-cyan: #00f0ff;
-        --neon-pink: #ff0055;
-        --neon-purple: #9d00ff;
-        --neon-amber: #ffaa00;
-        --text-main: #e2e8f0;
-        --text-dim: #798ba3;
+        --bg-main: #090a0f;
+        --card-bg: rgba(16, 18, 27, 0.75);
+        --card-border: rgba(255, 255, 255, 0.08);
+        --accent-cyan: #06b6d4;
+        --accent-pink: #f43f5e;
+        --accent-violet: #8b5cf6;
+        --text-bright: #f8fafc;
+        --text-muted: #94a3b8;
     }
 
+    /* Interactive spotlight background responsive to cursor */
     .stApp {
-        background: radial-gradient(circle at 50% 0%, #151128 0%, #08090f 60%, #030407 100%);
-        color: var(--text-main);
-        font-family: 'Rajdhani', sans-serif;
+        background-color: var(--bg-main);
+        background-image: 
+            radial-gradient(650px circle at var(--mouse-x, 50vw) var(--mouse-y, 30vh), rgba(6, 182, 212, 0.06), transparent 70%),
+            radial-gradient(550px circle at calc(var(--mouse-x, 50vw) + 120px) calc(var(--mouse-y, 30vh) + 100px), rgba(244, 63, 94, 0.04), transparent 60%),
+            linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+        background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+        color: var(--text-bright);
+        font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
-    /* Headings */
-    h1, h2, h3, h4 {
-        font-family: 'Orbitron', sans-serif !important;
-        letter-spacing: 1.5px !important;
-        text-transform: uppercase;
+    /* Typography */
+    h1, h2, h3 {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.02em !important;
+        color: var(--text-bright) !important;
+    }
+    
+    code, .mono {
+        font-family: 'JetBrains Mono', monospace !important;
     }
 
-    /* Cyber Title Glow */
-    .cyber-title {
-        font-family: 'Orbitron', sans-serif;
-        font-weight: 900;
-        font-size: 2.2rem;
-        color: #ffffff;
-        text-shadow: 0 0 10px rgba(0, 240, 255, 0.7), 0 0 25px rgba(0, 240, 255, 0.4);
-        margin-bottom: 0px;
-    }
-
-    .cyber-subtitle {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.85rem;
-        color: var(--neon-pink);
-        letter-spacing: 2px;
-        margin-bottom: 1.5rem;
-    }
-
-    /* HUD Metrics Cards */
-    .hud-card {
+    /* Metric Card with Hover Glow */
+    .metric-card {
         background: var(--card-bg);
-        border: 1px solid rgba(0, 240, 255, 0.25);
-        box-shadow: 0 0 15px rgba(0, 240, 255, 0.08), inset 0 0 10px rgba(0, 240, 255, 0.03);
-        border-radius: 6px;
-        padding: 14px 18px;
-        margin-bottom: 1rem;
+        border: 1px solid var(--card-border);
+        border-radius: 10px;
+        padding: 16px 20px;
+        backdrop-filter: blur(12px);
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         position: relative;
-        backdrop-filter: blur(10px);
+        overflow: hidden;
     }
-    .hud-card::before {
-        content: "";
-        position: absolute;
-        top: -1px; left: 10px; width: 40px; height: 2px;
-        background: var(--neon-cyan);
-        box-shadow: 0 0 8px var(--neon-cyan);
+    .metric-card:hover {
+        border-color: rgba(6, 182, 212, 0.45);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.15), 0 0 1px rgba(6, 182, 212, 0.5);
     }
-    .hud-label {
-        font-family: 'JetBrains Mono', monospace;
+    .metric-label {
         font-size: 0.75rem;
-        color: var(--text-dim);
+        font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        margin-bottom: 4px;
     }
-    .hud-val {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: #fff;
+    .metric-val {
+        font-size: 1.8rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--text-bright);
     }
-    .hud-val.cyan { color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0,240,255,0.6); }
-    .hud-val.pink { color: var(--neon-pink); text-shadow: 0 0 10px rgba(255,0,85,0.6); }
-    .hud-val.amber { color: var(--neon-amber); text-shadow: 0 0 10px rgba(255,170,0,0.6); }
 
-    /* Frame container for detection feed */
-    .viewport-container {
-        border: 1px solid rgba(255, 0, 85, 0.35);
-        background: rgba(10, 10, 18, 0.85);
+    /* Per-Item Detection Row / Card */
+    .object-pill {
+        background: rgba(22, 27, 38, 0.65);
+        border: 1px solid rgba(255, 255, 255, 0.07);
         border-radius: 8px;
-        padding: 10px;
-        box-shadow: 0 0 20px rgba(255, 0, 85, 0.12);
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s ease;
     }
-
-    /* Sidebar Styling */
-    section[data-testid="stSidebar"] {
-        background: rgba(7, 9, 14, 0.95);
-        border-right: 1px solid rgba(0, 240, 255, 0.18);
+    .object-pill:hover {
+        background: rgba(29, 36, 51, 0.9);
+        border-color: rgba(244, 63, 94, 0.4);
+        transform: translateX(3px);
+        box-shadow: 0 4px 15px rgba(244, 63, 94, 0.1);
     }
-    section[data-testid="stSidebar"] .stMarkdown h1, 
-    section[data-testid="stSidebar"] .stMarkdown h2, 
-    section[data-testid="stSidebar"] .stMarkdown h3 {
-        color: var(--neon-cyan);
-        font-size: 1.1rem !important;
+    .object-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #f1f5f9;
+        text-transform: capitalize;
     }
-
-    /* Slider / Input Accents */
-    div[data-baseweb="slider"] {
-        filter: hue-rotate(130deg);
-    }
-
-    /* Tab styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background: transparent;
-    }
-    .stTabs [data-baseweb="tab"] {
-        background: rgba(17, 24, 39, 0.7);
-        border: 1px solid rgba(0, 240, 255, 0.2);
-        color: var(--text-dim);
-        border-radius: 4px;
+    .object-conf {
         font-family: 'JetBrains Mono', monospace;
-    }
-    .stTabs [aria-selected="true"] {
-        background: rgba(0, 240, 255, 0.1) !important;
-        border-color: var(--neon-cyan) !important;
-        color: var(--neon-cyan) !important;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 5px;
+        background: rgba(6, 182, 212, 0.12);
+        color: var(--accent-cyan);
+        border: 1px solid rgba(6, 182, 212, 0.25);
     }
 
-    /* Tables */
-    div[data-testid="stDataFrame"] {
-        border: 1px solid rgba(0, 240, 255, 0.15);
-        border-radius: 6px;
+    /* Panels & Containers */
+    .panel-box {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 20px;
+        backdrop-filter: blur(14px);
+    }
+
+    /* Sidebar Clean-up */
+    section[data-testid="stSidebar"] {
+        background-color: #0c0e15;
+        border-right: 1px solid var(--card-border);
     }
     </style>
     """,
@@ -162,211 +171,221 @@ st.markdown(
 def load_yolo_model():
     try:
         from ultralytics import YOLO
-        # yolov5su: upgraded YOLOv5s anchor-free model handled natively
-        model = YOLO("yolov5su.pt")
-        return model
+        return YOLO("yolov5su.pt")
     except Exception as e:
         return None
 
 # ---------------------------------------------------------
-# HEADER / BRANDING
-# ---------------------------------------------------------
-col_h1, col_h2 = st.columns([3, 1])
-with col_h1:
-    st.markdown('<div class="cyber-title">SYNTEX // NEON-YOLO VISION</div>', unsafe_allow_html=True)
-    st.markdown('<div class="cyber-subtitle">[SYS: ONLINE] // NEURAL OBJECT DETECTION ENGINE // REV 5su</div>', unsafe_allow_html=True)
-with col_h2:
-    st.markdown(
-        """
-        <div style="text-align: right; padding-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #00f0ff;">
-            ⚡ TENSORFLOW / PYTORCH CORE<br>
-            <span style="color:#ff0055;">● LIVE STREAM ACTIVE</span>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-# ---------------------------------------------------------
-# MODEL INITIALIZATION
-# ---------------------------------------------------------
-with st.spinner("INITIATING NEURAL WEIGHTS..."):
-    model = load_yolo_model()
-
-if model is None:
-    st.error("FATAL ERROR: Failed to mount neural model. Check requirements and internet connectivity.")
-    st.stop()
-
-# ---------------------------------------------------------
-# HUD SIDEBAR CONFIGURATION
+# SIDEBAR CONTROLS
 # ---------------------------------------------------------
 with st.sidebar:
-    st.markdown("### // SYSTEM TUNING")
-    st.caption("Adjust confidence thresholding & IoU suppression parameters.")
+    st.markdown("### Settings")
+    st.caption("Detection thresholds and filtering")
 
     conf_threshold = st.slider(
-        "CONFIDENCE THRESHOLD",
+        "Confidence Threshold",
         min_value=0.05,
         max_value=1.0,
-        value=0.30,
+        value=0.25,
         step=0.01,
-        help="Filters detections lower than this certainty."
+        help="Minimum certainty score for a detection to be registered."
     )
 
     iou_threshold = st.slider(
-        "IOU THRESHOLD (NMS)",
+        "IoU Overlap Threshold",
         min_value=0.1,
         max_value=1.0,
         value=0.45,
         step=0.05,
-        help="Non-Maximum Suppression overlap threshold."
+        help="Non-Maximum Suppression threshold to merge overlapping boxes."
     )
 
     max_det = st.number_input(
-        "MAX TARGETS (LIMIT)",
+        "Max Detections",
         min_value=1,
         max_value=500,
-        value=50,
-        step=5
+        value=100,
+        step=10
     )
 
-    st.markdown("---")
-    st.markdown("### // TARGET FILTERING")
-    
-    # Allow filtering by specific classes
-    all_class_names = list(model.names.values())
-    selected_classes = st.multiselect(
-        "TARGET CLASSES (EMPTY = ALL)",
-        options=all_class_names,
-        default=[]
-    )
+    model = load_yolo_model()
 
-    st.markdown("---")
-    st.markdown(
-        """
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #506175;">
-            NODE: YOLOv5su-ULTRALYTICS<br>
-            PRECISION: FP32 / FP16 AUTO<br>
-            SECURITY LEVEL: OVERRIDE
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    if model:
+        st.markdown("---")
+        st.markdown("### Filter Classes")
+        all_classes = sorted(list(model.names.values()))
+        selected_classes = st.multiselect(
+            "Target Classes",
+            options=all_classes,
+            default=[],
+            help="Leave empty to detect all 80 COCO categories."
+        )
+    else:
+        selected_classes = []
 
 # ---------------------------------------------------------
-# INPUT SOURCE SELECTION (CAM OR FILE)
+# MAIN APP HEADER
 # ---------------------------------------------------------
-input_mode = st.radio(
-    "SELECT INPUT STREAM",
-    ["OPTICAL WEBCAM", "DIGITAL FILE UPLOAD"],
-    horizontal=True,
-    label_visibility="collapsed"
-)
+header_col1, header_col2 = st.columns([3, 1])
 
+with header_col1:
+    st.title("Object Detection Studio")
+    st.caption("YOLOv5su real-time visual inspection with multi-class telemetry")
+
+with header_col2:
+    input_source = st.segmented_control(
+        "Input Mode",
+        options=["Camera", "Upload"],
+        default="Camera",
+        label_visibility="collapsed"
+    )
+
+st.markdown("<div style='height: 10px'></div>", unsafe_allow_html=True)
+
+if model is None:
+    st.error("Failed to load YOLO model. Please verify your dependencies.")
+    st.stop()
+
+# ---------------------------------------------------------
+# INPUT ACQUISITION
+# ---------------------------------------------------------
 input_image = None
 
-if input_mode == "OPTICAL WEBCAM":
-    picture = st.camera_input("CAPTURE FEED", label_visibility="collapsed")
-    if picture:
-        input_image = Image.open(io.BytesIO(picture.getvalue())).convert("RGB")
+if input_source == "Camera":
+    camera_pic = st.camera_input("Capture frame", label_visibility="collapsed")
+    if camera_pic:
+        input_image = Image.open(io.BytesIO(camera_pic.getvalue())).convert("RGB")
 else:
-    uploaded_file = st.file_uploader(
-        "DROP HIGH-RES IMAGE STREAM (JPG, PNG)",
-        type=["jpg", "jpeg", "png"]
+    uploaded = st.file_uploader(
+        "Upload image (PNG, JPG, WebP)",
+        type=["png", "jpg", "jpeg", "webp"],
+        label_visibility="collapsed"
     )
-    if uploaded_file:
-        input_image = Image.open(uploaded_file).convert("RGB")
+    if uploaded:
+        input_image = Image.open(uploaded).convert("RGB")
 
 # ---------------------------------------------------------
-# DETECTION ENGINE & TELEMETRY DASHBOARD
+# PROCESSING & RESULTS WORKSPACE
 # ---------------------------------------------------------
 if input_image is not None:
-    # Filter class indices if selected
-    class_filter_indices = None
-    if selected_classes:
-        class_filter_indices = [k for k, v in model.names.items() if v in selected_classes]
+    # Build class filter indices if active
+    filter_indices = [k for k, v in model.names.items() if v in selected_classes] if selected_classes else None
 
-    # Model inference benchmark
-    start_time = time.time()
+    # Inference benchmark
+    t_start = time.perf_counter()
     results = model(
         input_image,
         conf=conf_threshold,
         iou=iou_threshold,
         max_det=int(max_det),
-        classes=class_filter_indices
+        classes=filter_indices
     )
-    inference_time = (time.time() - start_time) * 1000
+    latency_ms = (time.perf_counter() - t_start) * 1000
 
     res = results[0]
     boxes = res.boxes
-    annotated_bgr = res.plot()
-    annotated_rgb = annotated_bgr[:, :, ::-1]  # Ultralytics returns BGR; convert to RGB
+    annotated_rgb = res.plot()[:, :, ::-1]  # Ultralytics returns BGR; flip to RGB
 
     total_detections = len(boxes) if boxes is not None else 0
-    top_confidence = float(boxes.conf.max().item()) if total_detections > 0 else 0.0
-    detected_classes_count = len(set(boxes.cls.tolist())) if total_detections > 0 else 0
+    unique_classes = len(set(boxes.cls.tolist())) if total_detections > 0 else 0
+    top_conf = float(boxes.conf.max().item()) if total_detections > 0 else 0.0
 
-    # HUD KPI CARDS
-    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-    with kpi1:
+    # Top Metric Bar
+    m1, m2, m3, m4 = st.columns(4)
+    with m1:
         st.markdown(
-            f"""<div class="hud-card">
-                <div class="hud-label">// DETECTIONS</div>
-                <div class="hud-val cyan">{total_detections}</div>
+            f"""<div class="metric-card">
+                <div class="metric-label">Objects Found</div>
+                <div class="metric-val" style="color: #06b6d4;">{total_detections}</div>
             </div>""",
             unsafe_allow_html=True
         )
-    with kpi2:
+    with m2:
         st.markdown(
-            f"""<div class="hud-card">
-                <div class="hud-label">// UNIQUE CLASSES</div>
-                <div class="hud-val pink">{detected_classes_count}</div>
+            f"""<div class="metric-card">
+                <div class="metric-label">Unique Categories</div>
+                <div class="metric-val" style="color: #f43f5e;">{unique_classes}</div>
             </div>""",
             unsafe_allow_html=True
         )
-    with kpi3:
+    with m3:
         st.markdown(
-            f"""<div class="hud-card">
-                <div class="hud-label">// PEAK CONFIDENCE</div>
-                <div class="hud-val amber">{top_confidence * 100:.1f}%</div>
+            f"""<div class="metric-card">
+                <div class="metric-label">Top Confidence</div>
+                <div class="metric-val" style="color: #8b5cf6;">{top_conf * 100:.1f}%</div>
             </div>""",
             unsafe_allow_html=True
         )
-    with kpi4:
+    with m4:
         st.markdown(
-            f"""<div class="hud-card">
-                <div class="hud-label">// INFERENCE LATENCY</div>
-                <div class="hud-val">{inference_time:.1f} ms</div>
+            f"""<div class="metric-card">
+                <div class="metric-label">Latency</div>
+                <div class="metric-val">{latency_ms:.1f}<span style="font-size: 1rem; color: #64748b;"> ms</span></div>
             </div>""",
             unsafe_allow_html=True
         )
 
-    # VIEWPORT & TELEMETRY COLUMNS
-    col_view, col_telemetry = st.columns([1.3, 1], gap="medium")
+    st.markdown("<div style='height: 15px'></div>", unsafe_allow_html=True)
 
-    with col_view:
-        st.markdown("### // HUD VIEWPORT")
-        view_tab1, view_tab2 = st.tabs(["[ ANNOTATED FEED ]", "[ RAW SENSOR FEED ]"])
-        
-        with view_tab1:
-            st.image(
-                annotated_rgb,
-                caption="PROCESSED NEURAL MESH (YOLOv5su)",
-                use_container_width=True
-            )
-        with view_tab2:
-            st.image(
-                input_image,
-                caption="RAW UNFILTERED OPTIC INPUT",
-                use_container_width=True
-            )
+    # Main Split-Screen Workspace
+    viewport_col, data_col = st.columns([1.3, 1], gap="medium")
 
-    with col_telemetry:
-        st.markdown("### // TELEMETRY & SPECTRUM")
-        
+    with viewport_col:
+        view_tabs = st.tabs(["Processed View", "Original View"])
+        with view_tabs[0]:
+            st.image(annotated_rgb, use_container_width=True)
+        with view_tabs[1]:
+            st.image(input_image, use_container_width=True)
+
+    with data_col:
+        st.markdown("### Object Inventory")
+
         if total_detections > 0:
-            category_count = {}
-            category_conf = {}
+            # Aggregate stats
+            category_counts = {}
+            category_confs = {}
 
             for box in boxes:
                 c = int(box.cls.item())
-                cf = float(box.conf.item())
+                score = float(box.conf.item())
+                category_counts[c] = category_counts.get(c, 0) + 1
+                category_confs.setdefault(c, []).append(score)
+
+            chart_data = pd.DataFrame({
+                "Category": [model.names[c].capitalize() for c in category_counts.keys()],
+                "Count": list(category_counts.values())
+            }).sort_values(by="Count", ascending=False)
+
+            # Frequency Chart
+            st.bar_chart(chart_data.set_index("Category"), color="#06b6d4")
+
+            # Interactive List of individual detected objects
+            st.markdown("<div style='height: 8px'></div>", unsafe_allow_html=True)
+            for box in sorted(boxes, key=lambda b: float(b.conf.item()), reverse=True)[:10]:
+                cls_name = model.names[int(box.cls.item())].capitalize()
+                conf_val = float(box.conf.item()) * 100
+                st.markdown(
+                    f"""<div class="object-pill">
+                        <span class="object-name">{cls_name}</span>
+                        <span class="object-conf">{conf_val:.1f}%</span>
+                    </div>""",
+                    unsafe_allow_html=True
+                )
+
+            if total_detections > 10:
+                st.caption(f"Showing top 10 of {total_detections} detections.")
+
+        else:
+            st.info("No objects detected matching the current parameters. Lower the confidence threshold in the sidebar.")
+
+else:
+    # Clean placeholder when no image has been loaded
+    st.markdown(
+        """
+        <div style="border: 1px dashed rgba(255,255,255,0.15); border-radius: 12px; padding: 4.5rem 1rem; text-align: center; margin-top: 1rem;">
+            <div style="font-size: 1.15rem; font-weight: 600; color: #cbd5e1;">Awaiting image source</div>
+            <div style="font-size: 0.85rem; color: #64748b; margin-top: 6px;">Take a snapshot using the camera above or switch to file upload mode.</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
