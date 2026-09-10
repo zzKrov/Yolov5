@@ -10,24 +10,45 @@ import streamlit.components.v1 as components
 # PAGE SETUP
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="Object Detection Studio",
-    page_icon="🎯",
+    page_title="Object Detection Studio // YOLOv5",
+    page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # ---------------------------------------------------------
-# MOUSE-TRACKING SCRIPT (Passes coordinates to CSS)
+# MOUSE TRACKER & AMBIENT AURA SCRIPT
 # ---------------------------------------------------------
 components.html(
     """
     <script>
-    const parentDoc = window.parent.document;
-    const root = parentDoc.documentElement;
+    const pDoc = window.parent.document;
+    const root = pDoc.documentElement;
 
-    parentDoc.addEventListener('mousemove', (e) => {
+    // Create luminous cursor follower element
+    let aura = pDoc.getElementById('neon-mouse-aura');
+    if (!aura) {
+        aura = pDoc.createElement('div');
+        aura.id = 'neon-mouse-aura';
+        aura.style.position = 'fixed';
+        aura.style.pointerEvents = 'none';
+        aura.style.width = '380px';
+        aura.style.height = '380px';
+        aura.style.borderRadius = '50%';
+        aura.style.background = 'radial-gradient(circle, rgba(255, 0, 128, 0.18) 0%, rgba(0, 240, 255, 0.12) 40%, transparent 70%)';
+        aura.style.transform = 'translate(-50%, -50%)';
+        aura.style.transition = 'transform 0.05s ease-out, opacity 0.2s ease';
+        aura.style.zIndex = '999999';
+        aura.style.mixBlendMode = 'screen';
+        aura.style.filter = 'blur(12px)';
+        pDoc.body.appendChild(aura);
+    }
+
+    pDoc.addEventListener('mousemove', (e) => {
         root.style.setProperty('--mouse-x', `${e.clientX}px`);
         root.style.setProperty('--mouse-y', `${e.clientY}px`);
+        aura.style.left = `${e.clientX}px`;
+        aura.style.top = `${e.clientY}px`;
     });
     </script>
     """,
@@ -36,128 +57,207 @@ components.html(
 )
 
 # ---------------------------------------------------------
-# NEON NOIR DESIGN SYSTEM
+# OVER-THE-TOP NEON NOIR STYLESHEET
 # ---------------------------------------------------------
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap');
 
     :root {
-        --bg-main: #090a0f;
-        --card-bg: rgba(16, 18, 27, 0.75);
-        --card-border: rgba(255, 255, 255, 0.08);
-        --accent-cyan: #06b6d4;
-        --accent-pink: #f43f5e;
-        --accent-violet: #8b5cf6;
-        --text-bright: #f8fafc;
-        --text-muted: #94a3b8;
+        --neon-cyan: #00f0ff;
+        --neon-pink: #ff007f;
+        --neon-violet: #9d00ff;
+        --neon-amber: #ffb703;
+        --dark-void: #05060a;
+        --card-surface: rgba(13, 16, 28, 0.85);
     }
 
-    /* Interactive spotlight background responsive to cursor */
+    /* Interactive cursor-following spotlight canvas */
     .stApp {
-        background-color: var(--bg-main);
+        background-color: var(--dark-void);
         background-image: 
-            radial-gradient(650px circle at var(--mouse-x, 50vw) var(--mouse-y, 30vh), rgba(6, 182, 212, 0.06), transparent 70%),
-            radial-gradient(550px circle at calc(var(--mouse-x, 50vw) + 120px) calc(var(--mouse-y, 30vh) + 100px), rgba(244, 63, 94, 0.04), transparent 60%),
-            linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-        background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
-        color: var(--text-bright);
-        font-family: 'Plus Jakarta Sans', sans-serif;
+            radial-gradient(750px circle at var(--mouse-x, 50vw) var(--mouse-y, 30vh), rgba(0, 240, 255, 0.12), transparent 60%),
+            radial-gradient(600px circle at calc(var(--mouse-x, 50vw) - 180px) calc(var(--mouse-y, 30vh) + 120px), rgba(255, 0, 127, 0.10), transparent 55%),
+            linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 0, 127, 0.03) 1px, transparent 1px);
+        background-size: 100% 100%, 100% 100%, 42px 42px, 42px 42px;
+        color: #f8fafc;
+        font-family: 'Space Grotesk', sans-serif;
     }
 
-    /* Typography */
-    h1, h2, h3 {
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
-        font-weight: 700 !important;
-        letter-spacing: -0.02em !important;
-        color: var(--text-bright) !important;
-    }
-    
-    code, .mono {
-        font-family: 'JetBrains Mono', monospace !important;
+    /* Animated Multi-Gradient Title */
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
     }
 
-    /* Metric Card with Hover Glow */
-    .metric-card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 10px;
+    .ultra-title {
+        font-family: 'Unbounded', sans-serif;
+        font-weight: 900;
+        font-size: 2.35rem;
+        letter-spacing: -0.04em;
+        background: linear-gradient(90deg, #00f0ff, #ff007f, #9d00ff, #00f0ff);
+        background-size: 300% 300%;
+        animation: gradientShift 6s linear infinite;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 35px rgba(255, 0, 127, 0.4);
+        margin: 0;
+    }
+
+    .sub-badge {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        letter-spacing: 0.15em;
+        color: var(--neon-cyan);
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 4px;
+    }
+
+    .live-dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--neon-pink);
+        border-radius: 50%;
+        box-shadow: 0 0 10px var(--neon-pink), 0 0 20px var(--neon-pink);
+        animation: pulseDot 1.5s infinite;
+    }
+
+    @keyframes pulseDot {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.4); opacity: 0.5; }
+    }
+
+    /* Top Control Deck Strip */
+    .control-deck {
+        background: var(--card-surface);
+        border: 1px solid rgba(0, 240, 255, 0.25);
+        border-radius: 14px;
+        padding: 16px 22px;
+        box-shadow: 0 0 30px rgba(0, 240, 255, 0.08), inset 0 0 15px rgba(0, 240, 255, 0.03);
+        backdrop-filter: blur(16px);
+        margin-bottom: 1.5rem;
+    }
+
+    /* Saturated KPI Cards */
+    .kpi-card {
+        background: var(--card-surface);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 12px;
         padding: 16px 20px;
-        backdrop-filter: blur(12px);
         transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         position: relative;
         overflow: hidden;
     }
-    .metric-card:hover {
-        border-color: rgba(6, 182, 212, 0.45);
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.15), 0 0 1px rgba(6, 182, 212, 0.5);
+    .kpi-card::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
+        opacity: 0.5;
+        transition: opacity 0.25s ease;
     }
-    .metric-label {
-        font-size: 0.75rem;
-        font-weight: 600;
+    .kpi-card:hover {
+        transform: translateY(-4px) scale(1.01);
+        border-color: var(--neon-cyan);
+        box-shadow: 0 12px 30px rgba(0, 240, 255, 0.2), 0 0 15px rgba(255, 0, 127, 0.2);
+    }
+    .kpi-card:hover::after {
+        opacity: 1;
+    }
+    .kpi-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.78rem;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--text-muted);
-        margin-bottom: 4px;
+        letter-spacing: 0.08em;
+        color: #94a3b8;
     }
-    .metric-val {
-        font-size: 1.8rem;
+    .kpi-num {
+        font-family: 'Unbounded', sans-serif;
+        font-size: 2rem;
         font-weight: 800;
-        letter-spacing: -0.03em;
-        color: var(--text-bright);
+        letter-spacing: -0.04em;
+        margin-top: 4px;
     }
 
-    /* Per-Item Detection Row / Card */
-    .object-pill {
-        background: rgba(22, 27, 38, 0.65);
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 8px;
+    /* Neon Viewport Container with Cyber Brackets */
+    .viewport-frame {
+        position: relative;
+        background: rgba(10, 13, 22, 0.9);
+        border: 1px solid rgba(0, 240, 255, 0.3);
+        border-radius: 14px;
+        padding: 12px;
+        box-shadow: 0 0 35px rgba(0, 240, 255, 0.12), inset 0 0 30px rgba(0, 0, 0, 0.6);
+        overflow: hidden;
+    }
+    .viewport-frame::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 2px;
+        background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-pink), transparent);
+        animation: scanline 4s linear infinite;
+    }
+    @keyframes scanline {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(1200%); }
+    }
+
+    /* Detection Item Card with Gradient Confidence Meter */
+    .det-item {
+        background: rgba(18, 22, 36, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .det-item:hover {
+        background: rgba(26, 31, 51, 0.95);
+        border-color: var(--neon-pink);
+        transform: translateX(5px);
+        box-shadow: 0 0 20px rgba(255, 0, 127, 0.25);
+    }
+    .det-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        transition: all 0.2s ease;
+        margin-bottom: 8px;
     }
-    .object-pill:hover {
-        background: rgba(29, 36, 51, 0.9);
-        border-color: rgba(244, 63, 94, 0.4);
-        transform: translateX(3px);
-        box-shadow: 0 4px 15px rgba(244, 63, 94, 0.1);
-    }
-    .object-name {
-        font-weight: 600;
-        font-size: 0.95rem;
-        color: #f1f5f9;
+    .det-name {
+        font-family: 'Unbounded', sans-serif;
+        font-weight: 700;
+        font-size: 0.88rem;
+        letter-spacing: -0.02em;
+        color: #ffffff;
         text-transform: capitalize;
     }
-    .object-conf {
+    .det-conf-val {
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.8rem;
-        font-weight: 600;
-        padding: 3px 8px;
-        border-radius: 5px;
-        background: rgba(6, 182, 212, 0.12);
-        color: var(--accent-cyan);
-        border: 1px solid rgba(6, 182, 212, 0.25);
+        font-weight: 700;
+        color: var(--neon-cyan);
     }
-
-    /* Panels & Containers */
-    .panel-box {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 12px;
-        padding: 20px;
-        backdrop-filter: blur(14px);
+    .det-meter-bg {
+        width: 100%;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        overflow: hidden;
     }
-
-    /* Sidebar Clean-up */
-    section[data-testid="stSidebar"] {
-        background-color: #0c0e15;
-        border-right: 1px solid var(--card-border);
+    .det-meter-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--neon-cyan), var(--neon-violet), var(--neon-pink));
+        border-radius: 999px;
+        box-shadow: 0 0 10px rgba(255, 0, 127, 0.6);
     }
     </style>
     """,
@@ -168,223 +268,210 @@ st.markdown(
 # MODEL LOADER
 # ---------------------------------------------------------
 @st.cache_resource
-def load_yolo_model():
+def load_yolo():
     try:
         from ultralytics import YOLO
         return YOLO("yolov5su.pt")
     except Exception as e:
         return None
 
-# ---------------------------------------------------------
-# SIDEBAR CONTROLS
-# ---------------------------------------------------------
-with st.sidebar:
-    st.markdown("### Settings")
-    st.caption("Detection thresholds and filtering")
+model = load_yolo()
 
-    conf_threshold = st.slider(
-        "Confidence Threshold",
-        min_value=0.05,
-        max_value=1.0,
-        value=0.25,
-        step=0.01,
-        help="Minimum certainty score for a detection to be registered."
+# ---------------------------------------------------------
+# HEADER
+# ---------------------------------------------------------
+head_col1, head_col2 = st.columns([3, 1])
+with head_col1:
+    st.markdown('<div class="ultra-title">OBJECT DETECTION STUDIO</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sub-badge"><span class="live-dot"></span> YOLOv5su ENGINE ACTIVE • INTERACTIVE VIEWPORT</div>',
+        unsafe_allow_html=True
     )
 
-    iou_threshold = st.slider(
-        "IoU Overlap Threshold",
-        min_value=0.1,
-        max_value=1.0,
-        value=0.45,
-        step=0.05,
-        help="Non-Maximum Suppression threshold to merge overlapping boxes."
-    )
-
-    max_det = st.number_input(
-        "Max Detections",
-        min_value=1,
-        max_value=500,
-        value=100,
-        step=10
-    )
-
-    model = load_yolo_model()
-
-    if model:
-        st.markdown("---")
-        st.markdown("### Filter Classes")
-        all_classes = sorted(list(model.names.values()))
-        selected_classes = st.multiselect(
-            "Target Classes",
-            options=all_classes,
-            default=[],
-            help="Leave empty to detect all 80 COCO categories."
-        )
-    else:
-        selected_classes = []
-
-# ---------------------------------------------------------
-# MAIN APP HEADER
-# ---------------------------------------------------------
-header_col1, header_col2 = st.columns([3, 1])
-
-with header_col1:
-    st.title("Object Detection Studio")
-    st.caption("YOLOv5su real-time visual inspection with multi-class telemetry")
-
-with header_col2:
-    input_source = st.segmented_control(
-        "Input Mode",
-        options=["Camera", "Upload"],
-        default="Camera",
+with head_col2:
+    input_source = st.radio(
+        "Source",
+        ["Live Camera", "Image Upload"],
+        horizontal=True,
         label_visibility="collapsed"
     )
 
-st.markdown("<div style='height: 10px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height: 15px'></div>", unsafe_allow_html=True)
 
 if model is None:
-    st.error("Failed to load YOLO model. Please verify your dependencies.")
+    st.error("Failed to mount YOLOv5 model. Check dependencies.")
     st.stop()
 
 # ---------------------------------------------------------
-# INPUT ACQUISITION
+# INTEGRATED CONTROL DECK
+# ---------------------------------------------------------
+with st.expander("⚡ DETECTION PARAMETERS & FILTERS", expanded=True):
+    ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1.2, 1.2, 2])
+
+    with ctrl_col1:
+        conf_thresh = st.slider("Confidence Threshold", 0.05, 1.0, 0.28, 0.01)
+
+    with ctrl_col2:
+        iou_thresh = st.slider("IoU Overlap Suppression", 0.10, 1.0, 0.45, 0.05)
+
+    with ctrl_col3:
+        all_coco = sorted(list(model.names.values()))
+        selected_classes = st.multiselect(
+            "Filter Target Classes",
+            options=all_coco,
+            default=[],
+            placeholder="All 80 classes enabled"
+        )
+
+# ---------------------------------------------------------
+# ACQUIRE INPUT FRAME
 # ---------------------------------------------------------
 input_image = None
 
-if input_source == "Camera":
-    camera_pic = st.camera_input("Capture frame", label_visibility="collapsed")
-    if camera_pic:
-        input_image = Image.open(io.BytesIO(camera_pic.getvalue())).convert("RGB")
+if input_source == "Live Camera":
+    shot = st.camera_input("Optical Feed Capture", label_visibility="collapsed")
+    if shot:
+        input_image = Image.open(io.BytesIO(shot.getvalue())).convert("RGB")
 else:
-    uploaded = st.file_uploader(
-        "Upload image (PNG, JPG, WebP)",
-        type=["png", "jpg", "jpeg", "webp"],
-        label_visibility="collapsed"
-    )
-    if uploaded:
-        input_image = Image.open(uploaded).convert("RGB")
+    up = st.file_uploader("Upload Image File", type=["jpg", "jpeg", "png", "webp"], label_visibility="collapsed")
+    if up:
+        input_image = Image.open(up).convert("RGB")
 
 # ---------------------------------------------------------
-# PROCESSING & RESULTS WORKSPACE
+# INFERENCE & MULTI-PANE WORKSPACE
 # ---------------------------------------------------------
 if input_image is not None:
-    # Build class filter indices if active
-    filter_indices = [k for k, v in model.names.items() if v in selected_classes] if selected_classes else None
+    filter_ids = [k for k, v in model.names.items() if v in selected_classes] if selected_classes else None
 
-    # Inference benchmark
-    t_start = time.perf_counter()
+    # Benchmark inference
+    t0 = time.perf_counter()
     results = model(
         input_image,
-        conf=conf_threshold,
-        iou=iou_threshold,
-        max_det=int(max_det),
-        classes=filter_indices
+        conf=conf_thresh,
+        iou=iou_thresh,
+        classes=filter_ids
     )
-    latency_ms = (time.perf_counter() - t_start) * 1000
+    inference_ms = (time.perf_counter() - t0) * 1000
 
     res = results[0]
     boxes = res.boxes
-    annotated_rgb = res.plot()[:, :, ::-1]  # Ultralytics returns BGR; flip to RGB
+    annotated_rgb = res.plot()[:, :, ::-1]
 
-    total_detections = len(boxes) if boxes is not None else 0
-    unique_classes = len(set(boxes.cls.tolist())) if total_detections > 0 else 0
-    top_conf = float(boxes.conf.max().item()) if total_detections > 0 else 0.0
+    count_total = len(boxes) if boxes is not None else 0
+    unique_types = len(set(boxes.cls.tolist())) if count_total > 0 else 0
+    peak_conf = float(boxes.conf.max().item()) * 100 if count_total > 0 else 0.0
 
-    # Top Metric Bar
-    m1, m2, m3, m4 = st.columns(4)
-    with m1:
+    # 4 HIGH-CONTRAST METRICS
+    k1, k2, k3, k4 = st.columns(4)
+    with k1:
         st.markdown(
-            f"""<div class="metric-card">
-                <div class="metric-label">Objects Found</div>
-                <div class="metric-val" style="color: #06b6d4;">{total_detections}</div>
+            f"""<div class="kpi-card">
+                <div class="kpi-title">Detected Objects</div>
+                <div class="kpi-num" style="color: var(--neon-cyan);">{count_total}</div>
             </div>""",
             unsafe_allow_html=True
         )
-    with m2:
+    with k2:
         st.markdown(
-            f"""<div class="metric-card">
-                <div class="metric-label">Unique Categories</div>
-                <div class="metric-val" style="color: #f43f5e;">{unique_classes}</div>
+            f"""<div class="kpi-card">
+                <div class="kpi-title">Unique Classes</div>
+                <div class="kpi-num" style="color: var(--neon-pink);">{unique_types}</div>
             </div>""",
             unsafe_allow_html=True
         )
-    with m3:
+    with k3:
         st.markdown(
-            f"""<div class="metric-card">
-                <div class="metric-label">Top Confidence</div>
-                <div class="metric-val" style="color: #8b5cf6;">{top_conf * 100:.1f}%</div>
+            f"""<div class="kpi-card">
+                <div class="kpi-title">Top Confidence</div>
+                <div class="kpi-num" style="color: #00ff88;">{peak_conf:.1f}%</div>
             </div>""",
             unsafe_allow_html=True
         )
-    with m4:
+    with k4:
         st.markdown(
-            f"""<div class="metric-card">
-                <div class="metric-label">Latency</div>
-                <div class="metric-val">{latency_ms:.1f}<span style="font-size: 1rem; color: #64748b;"> ms</span></div>
+            f"""<div class="kpi-card">
+                <div class="kpi-title">Speed Latency</div>
+                <div class="kpi-num" style="color: #ffb703;">{inference_ms:.1f}<span style="font-size: 1rem; color: #64748b;">ms</span></div>
             </div>""",
             unsafe_allow_html=True
         )
 
-    st.markdown("<div style='height: 15px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 20px'></div>", unsafe_allow_html=True)
 
-    # Main Split-Screen Workspace
-    viewport_col, data_col = st.columns([1.3, 1], gap="medium")
+    # 2-PANE WORKSPACE: VIEWPORT (LEFT) vs TELEMETRY TOWER (RIGHT)
+    col_viewport, col_telemetry = st.columns([1.35, 1], gap="large")
 
-    with viewport_col:
-        view_tabs = st.tabs(["Processed View", "Original View"])
-        with view_tabs[0]:
+    with col_viewport:
+        view_mode = st.segmented_control(
+            "Channel",
+            options=["Annotated Overlay", "Raw Sensor View"],
+            default="Annotated Overlay",
+            label_visibility="collapsed"
+        )
+        
+        st.markdown('<div class="viewport-frame">', unsafe_allow_html=True)
+        if view_mode == "Annotated Overlay":
             st.image(annotated_rgb, use_container_width=True)
-        with view_tabs[1]:
+        else:
             st.image(input_image, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    with data_col:
-        st.markdown("### Object Inventory")
+    with col_telemetry:
+        st.markdown("<h3 style='font-family: Unbounded; font-size: 1.1rem; margin-top: 0;'>OBJECT INVENTORY</h3>", unsafe_allow_html=True)
 
-        if total_detections > 0:
-            # Aggregate stats
-            category_counts = {}
-            category_confs = {}
+        if count_total > 0:
+            # Category Breakdown
+            cat_counts = {}
+            for b in boxes:
+                c = int(b.cls.item())
+                cat_counts[c] = cat_counts.get(c, 0) + 1
 
-            for box in boxes:
-                c = int(box.cls.item())
-                score = float(box.conf.item())
-                category_counts[c] = category_counts.get(c, 0) + 1
-                category_confs.setdefault(c, []).append(score)
-
-            chart_data = pd.DataFrame({
-                "Category": [model.names[c].capitalize() for c in category_counts.keys()],
-                "Count": list(category_counts.values())
+            df_chart = pd.DataFrame({
+                "Category": [model.names[c].capitalize() for c in cat_counts.keys()],
+                "Count": list(cat_counts.values())
             }).sort_values(by="Count", ascending=False)
 
-            # Frequency Chart
-            st.bar_chart(chart_data.set_index("Category"), color="#06b6d4")
+            # Saturated bar chart
+            st.bar_chart(df_chart.set_index("Category"), color="#00f0ff")
 
-            # Interactive List of individual detected objects
-            st.markdown("<div style='height: 8px'></div>", unsafe_allow_html=True)
-            for box in sorted(boxes, key=lambda b: float(b.conf.item()), reverse=True)[:10]:
-                cls_name = model.names[int(box.cls.item())].capitalize()
-                conf_val = float(box.conf.item()) * 100
+            st.markdown("<div style='height: 10px'></div>", unsafe_allow_html=True)
+
+            # Individual Detection Pills with animated gradient progress bars
+            for b in sorted(boxes, key=lambda x: float(x.conf.item()), reverse=True)[:8]:
+                cls_label = model.names[int(b.cls.item())].capitalize()
+                c_score = float(b.conf.item()) * 100
                 st.markdown(
-                    f"""<div class="object-pill">
-                        <span class="object-name">{cls_name}</span>
-                        <span class="object-conf">{conf_val:.1f}%</span>
+                    f"""<div class="det-item">
+                        <div class="det-header">
+                            <span class="det-name">{cls_label}</span>
+                            <span class="det-conf-val">{c_score:.1f}%</span>
+                        </div>
+                        <div class="det-meter-bg">
+                            <div class="det-meter-fill" style="width: {c_score}%;"></div>
+                        </div>
                     </div>""",
                     unsafe_allow_html=True
                 )
 
-            if total_detections > 10:
-                st.caption(f"Showing top 10 of {total_detections} detections.")
-
+            if count_total > 8:
+                st.caption(f"Displaying top 8 of {count_total} detected instances.")
         else:
-            st.info("No objects detected matching the current parameters. Lower the confidence threshold in the sidebar.")
+            st.markdown(
+                """
+                <div style="border: 1px solid rgba(255, 0, 127, 0.4); border-radius: 12px; padding: 2.5rem 1rem; text-align: center; background: rgba(255, 0, 127, 0.05);">
+                    <div style="font-family: Unbounded; font-size: 1rem; color: var(--neon-pink); margin-bottom: 6px;">Zero Objects Detected</div>
+                    <div style="font-size: 0.85rem; color: #94a3b8;">Adjust the confidence threshold slider above or check your class filters.</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
 else:
-    # Clean placeholder when no image has been loaded
     st.markdown(
         """
-        <div style="border: 1px dashed rgba(255,255,255,0.15); border-radius: 12px; padding: 4.5rem 1rem; text-align: center; margin-top: 1rem;">
-            <div style="font-size: 1.15rem; font-weight: 600; color: #cbd5e1;">Awaiting image source</div>
-            <div style="font-size: 0.85rem; color: #64748b; margin-top: 6px;">Take a snapshot using the camera above or switch to file upload mode.</div>
+        <div style="border: 1px dashed rgba(0, 240, 255, 0.3); border-radius: 16px; padding: 5rem 1rem; text-align: center; margin-top: 1.5rem; background: rgba(0, 240, 255, 0.02);">
+            <div style="font-family: 'Unbounded'; font-size: 1.3rem; color: #00f0ff; letter-spacing: -0.02em;">Awaiting Input Stream</div>
+            <div style="font-family: 'Space Grotesk'; font-size: 0.9rem; color: #94a3b8; margin-top: 8px;">Capture a photo with your webcam above or switch to upload mode to launch neural detection.</div>
         </div>
         """,
         unsafe_allow_html=True
